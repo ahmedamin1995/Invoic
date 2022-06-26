@@ -1,0 +1,209 @@
+﻿@model InvoicApp.Models.InvoiceViewModel
+@using InvoicApp.ExtensionsMethodes
+
+<form id="NewOrderForm" method="post" asp-action="Create">
+    <div class="modal-body">
+        @*Customer Details*@
+        <h5 style="color:#ff6347"> Edit Invoice</h5>
+        <hr />
+        <input type="hidden" id="invoiceID" value="@Model.invoices.ID" />
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="inputEmail4">Serial No</label>
+                <input type="text" asp-for="invoices.SerialNo" class="form-control" id="SerialNo" placeholder="Serial No">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="inputPassword4">Invoice Date</label>
+                <input type="date" asp-for="invoices.Createdate" class="form-control" id="Createdate" placeholder="Createdate">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="inputEmail4">Store</label>
+                <select asp-for="@Model.invoices.StoreID" id="StoreID" asp-items="Model.Stores.ToSelectListItem(Model.invoices.StoreID)" class="form-control"></select>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="inputPassword4">Customer</label>
+                <select asp-for="@Model.invoices.CustomerID" id="CustomerID" asp-items="Model.Customers.ToSelectListItem(Model.invoices.CustomerID)" class="form-control"></select>
+
+            </div>
+
+
+        </div>
+
+
+        @*Order Details*@
+        <h5 style="margin-top:10px;color:#ff6347">Invoice Details</h5>
+        <hr />
+        <div class="form-horizontal">
+            <input type="hidden" id="OrderId" />
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="inputEmail4">Item</label>
+                    <select id="ItemID" asp-items="Model.Items.ToSelectListItem(Model.InvoiceDetail.ItemID)" class="form-control"></select>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="inputPassword4">Unit</label>
+                    <select id="UnitID" asp-items="Model.Units.ToSelectListItem(Model.InvoiceDetail.UnitID)" class="form-control"></select>
+
+                </div>
+
+                <div class="form-group col-md-6">
+                    <label for="inputPassword4">Quantity</label>
+                    <input type="number" class="form-control" id="Quantity" placeholder="Quantity">
+                </div>
+
+                <div class="form-group col-md-6">
+                    <label for="inputPassword4">Price</label>
+                    <input type="number" class="form-control" id="Price" placeholder="Price">
+                </div>
+
+                <div class="form-group col-md-6">
+                    <label for="inputPassword4">Discount</label>
+                    <input type="number" class="form-control" id="Discount" placeholder="Discount">
+                </div>
+
+
+            </div>
+
+            <div class="form-group">
+
+                <div class="col-md-2 col-lg-offset-4">
+                    <a id="addToList" class="btn btn-primary">Add To List</a>
+                </div>
+            </div>
+
+            <table id="detailsTable" class="table">
+                <thead>
+                    <tr>
+                        <th style="width:30%">Item</th>
+                        <th style="width:30%">Unit</th>
+                        <th style="width:20%">Quantity</th>
+                        <th style="width:15%"> Unit Price</th>
+                        <th style="width:15%"> Discount</th>
+                        <th style="width:25%">Amount</th>
+                        <th style="width:10%"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.invoices.InvoiceDetails)
+                    {
+                        var Total = @item.Quantity * @item.Price - @item.Discount;
+                    <tr>
+                        <td id="@item.ItemID"> @item.Item.Name</td>
+                        <td id="@item.UnitID"> @item.Unit.Name</td>
+                        <td> @item.Quantity</td>
+                        <td> @item.Price</td>
+                        <td> @item.Discount</td>
+                        <td> @Total</td>
+                        <td> <a data-itemId="0" href="#" class="deleteItem">Remove</a></td>
+                    </tr>
+                   }
+                    </tbody>
+                </table>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a style="margin-right:10px" class="btn btn-primary pull-right" asp-action="Index" asp-controller="Invoice"> Back To Index List  </a>
+        <button id="saveOrder" type="submit" class="btn btn-danger">Save Invoice</button>
+    </div>
+</form>
+
+
+@section scripts{
+    <script>
+        //Show Modal.
+        function addNewOrder() {
+            $("#newOrderModal").modal();
+        }
+        //Add Multiple Order.
+        $("#addToList").click(function (e) {
+            e.preventDefault();
+
+            if ($.trim($("#Quantity").val()) == "" || $.trim($("#Price").val()) == "" ) return;
+
+          //  console.log($("#ItemID option:selected").html())
+            var ItemID = $("#ItemID").val(),
+                itemName = $("#ItemID option:selected").html(),
+                UnitID = $("#UnitID").val(),
+                UnitName = $("#UnitID option:selected").html(),
+                price = $("#Price").val(),
+                quantity = $("#Quantity").val(),
+                Discount = $("#Discount").val(),
+                detailsTableBody = $("#detailsTable tbody");
+
+            var productItem = '<tr><td id ="' + ItemID + '"> ' + itemName + '</td> <td id="' + UnitID + '">' + UnitName + ' </td>  <td>' + quantity + '</td><td>' + price + '</td> <td>' + Discount + '</td> <td>' + (parseFloat(price) * parseInt(quantity) - (isNaN(parseFloat(Discount)) ? 0 : parseFloat(Discount) )) + '</td><td><a data-itemId="0" href="#" class="deleteItem">Remove</a></td></tr>';
+            detailsTableBody.append(productItem);
+            clearItem();
+        });
+        //After Add A New Order In The List, Clear Clean The Form For Add More Order.
+        function clearItem() {
+
+            $("#Price").val('');
+            $("#Quantity").val('');
+            $("#Discount").val('');
+        }
+        // After Add A New Order In The List, If You Want, You Can Remove It.
+        $(document).on('click', 'a.deleteItem', function (e) {
+            e.preventDefault();
+            var $self = $(this);
+            if ($(this).attr('data-itemId') == "0") {
+                $(this).parents('tr').css("background-color", "#ff6347").fadeOut(800, function () {
+                    $(this).remove();
+                });
+            }
+        });
+
+
+
+    </script>
+
+    <script>
+    $(document).ready(function () {
+        $("#saveOrder").click(function (e) {
+            e.preventDefault();
+
+            var invoiceDetailArr = [];
+            invoiceDetailArr.length = 0;
+            $.each($("#detailsTable tbody tr"), function () {
+                invoiceDetailArr.push({
+                    itemID: $(this).find('td:eq(0)').attr('id'),
+                    unitID: $(this).find('td:eq(1)').attr('id'),
+                    quantity: $(this).find('td:eq(2)').html(),
+                    price: $(this).find('td:eq(3)').html(),
+                    discount: $(this).find('td:eq(4)').html()
+                });
+            });
+
+            var data = JSON.stringify({
+                invoicID: $("#invoiceID").val(),
+                serialNo: $("#SerialNo").val(),
+                createdate: $("#Createdate").val(),
+                storeID: $("#StoreID").val(),
+                customerID: $("#CustomerID").val(),
+                invoiceDetail: invoiceDetailArr
+            });
+
+            //var data = JSON.stringify({
+
+            //});
+
+            $.ajax({
+                url: '/Invoice/Edit',
+                data: data,
+                contentType: 'application/json',
+                type: 'POST',
+                success: function (data) {
+                    alert('success')
+                 /*   location.reload();*/
+                }
+            });
+
+            console.log('invoiceDetailArr', invoiceDetailArr);
+            console.log('data', data);
+
+
+        });
+
+    });
+    </script>
+}
