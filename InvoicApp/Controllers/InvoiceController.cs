@@ -14,7 +14,7 @@ namespace InvoicApp.Controllers
         private readonly IInoviceRepository _inoviceRepository;
         private readonly IInvoiceDetailRepository _invoiceDetailRepository;
 
-        
+        //invoice
         [BindProperty]
         public InvoiceViewModel invoiceViewModel { get; set; }
         public InvoiceController(IInoviceRepository inoviceRepository, IInvoiceDetailRepository invoiceDetailRepository)
